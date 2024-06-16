@@ -7,6 +7,10 @@ import 'search_screen.dart';
 import 'genres_screen.dart';
 
 class HomeScreen extends StatefulWidget {
+  final String token;
+
+  HomeScreen({required this.token});
+
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
@@ -16,7 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   static List<Widget> _widgetOptions = <Widget>[
     GenresScreen(),
     SearchScreen(),
-    FavoriteMoviesScreen()
+    FavoriteMoviesScreen(),
   ];
 
   @override
@@ -55,7 +59,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: Icon(Icons.search),
                     label: 'Search',
                   ),
-
                   BottomNavigationBarItem(
                     icon: Icon(Icons.favorite),
                     label: 'Favorites',

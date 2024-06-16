@@ -2,13 +2,39 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/genre.dart';
 
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
 class TvdbApi {
   static const String apiKey = '12e70dcf-0c55-4542-afe4-143b402a0424';
-  static const String token =
-      'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJhZ2UiOiIiLCJhcGlrZXkiOiIxMmU3MGRjZi0wYzU1LTQ1NDItYWZlNC0xNDNiNDAyYTA0MjQiLCJjb21tdW5pdHlfc3VwcG9ydGVkIjpmYWxzZSwiZXhwIjoxNzIxMDAyNTAwLCJnZW5kZXIiOiIiLCJoaXRzX3Blcl9kYXkiOjEwMDAwMDAwMCwiaGl0c19wZXJfbW9udGgiOjEwMDAwMDAwMCwiaWQiOiIyNDY3Nzc4IiwiaXNfbW9kIjpmYWxzZSwiaXNfc3lzdGVtX2tleSI6ZmFsc2UsImlzX3RydXN0ZWQiOmZhbHNlLCJwaW4iOiJzdHJpbmciLCJyb2xlcyI6W10sInRlbmFudCI6InR2ZGIiLCJ1dWlkIjoiIn0.UAAUice4LR_MdRgoPHyZ4dOWAV-iyrg6UY8NgvN1B8G_-irHT7ge_JpJM9TYbo4ur9FpwZ3NDSSdTfuQJLWNIKbyDE9ZS_dD5ma8cSGVxLiZ6rNWGxaTseRXU2nIBFWDorB0FGi5BF90e2pimXxCn1Y4QTbKLXvah-a1iYHc-kfpfk4wKRj6R1NMmhxPRixgF-R1e4023ek7JuquuX4R8f_io1_1r3b24Zq3hc0YBw9VFiWi6qvwgZEqsSSeDERKmhatUJgahXlQWxsktoRcHhCPwysuJHHSGoz4pi7CPG_EUtOt2iKnJMsRn9T-7mHbZyLzAEHwdXG8dg-Go2lFA3ubgLbpl7Y4K7vtXUYRsYdBhtVnpwB4CEgzmtzHlkenwjqD9KEb1YJ6W8STvS-Zhzw55fFPK8tci8jJ5yMzOLNBHLLRUaxDT5LnGpCyiMYQTZ9tefiFcsar_0mbepTiQTefkv6Ae1bzZOcVB5MKHiZbf8I3dCIc5mMyAzaJHnctmtX79UTtZ3fz34XpTBfmE02cZ3-QUzv2CNsI0P9Yvfl7lzcrn3anpYOdZhnZc_ZbRYvhl_a-HF2JregwEgwnc3OHHBM_PBtjI6PnGg-VGauP81qC5bhttW2rwQaOYOSG-_OOibgG4yb8vqGN44SmZ5Y400m0sYgRLryhJFqXLnI';
   static const String baseUrl = 'https://api4.thetvdb.com/v4';
+  static String? token;
+
+  Future<void> loginAndGetToken() async {
+    final loginUrl = Uri.parse('$baseUrl/login');
+    final body = jsonEncode({'apikey': apiKey});
+
+    final response = await http.post(
+      loginUrl,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: body,
+    );
+
+    if (response.statusCode == 200) {
+      final responseBody = jsonDecode(response.body);
+      token = responseBody['data']['token'];
+    } else {
+      throw Exception('Failed to login and get token: ${response.statusCode}');
+    }
+  }
 
   Future<List<dynamic>> fetchGenres() async {
+    if (token == null) {
+      await loginAndGetToken();
+    }
+
     final genresUrl = Uri.parse('$baseUrl/genres');
 
     final response = await http.get(
@@ -28,8 +54,14 @@ class TvdbApi {
     }
   }
 
-  Future<List<dynamic>> fetchMoviesByGenre(int genreId, {int page = 1, int itemsPerPage = 20}) async {
-    final moviesUrl = Uri.parse('$baseUrl/movies/filter?genre=$genreId&page=$page&pageSize=$itemsPerPage');
+  Future<List<dynamic>> fetchMoviesByGenre(int genreId,
+      {int page = 1, int itemsPerPage = 20}) async {
+    if (token == null) {
+      await loginAndGetToken();
+    }
+
+    final moviesUrl = Uri.parse(
+        '$baseUrl/movies/filter?genre=$genreId&page=$page&pageSize=$itemsPerPage');
 
     final response = await http.get(
       moviesUrl,
